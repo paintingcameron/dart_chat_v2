@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+import 'package:dart_chat/Views/homeView.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:dart_chat/Bloc/bloc.dart';
 
 late Socket server;
 late var clients;
@@ -12,34 +12,46 @@ void main() {
 }
 
 class DartChat extends StatefulWidget {
+  
   @override
   _DartChatState createState() => _DartChatState();
 }
 
 class _DartChatState extends State<DartChat> {
-  late Future<String> _nickname;
-
-  Future<dynamic> getClients() async {
-    var url = Uri.parse('http://localhost:4568/clients');
-    final response = await http.get(url);
-    final decoded = jsonDecode(response.body) as Map;
-    clients = decoded.values.toList()[0];
-    return clients;
+  late Future<Bloc> _blocInit;
+  
+  Future<Bloc> _initiateBloc() async {
+    Bloc b = Bloc();
+    await b.initClientStream();
+    return b;
   }
 
+    @override
+  void initState() {
+    super.initState();
+    _blocInit = _initiateBloc();
+  }
+  
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: FutureBuilder(
-        future: getClients(),
-        builder: (context, AsyncSnapshot snapshot) {
+      home: FutureBuilder<Bloc>(
+        future: _blocInit,
+        builder: (context, AsyncSnapshot<Bloc> snapshot) {
           if (snapshot.hasData) {
-            return startView(context);
+            if (snapshot.data is Bloc) {
+              bloc = snapshot.data!;
+              return HomeView();
+            } else {
+              print('something went wrong');
+              return loadingView();
+            }
           } else {
             return loadingView();
           }
-        }
-      ),
+        },
+      )
     );
   }
 
@@ -56,52 +68,4 @@ class _DartChatState extends State<DartChat> {
   }
 }
 
-class NicknameInput extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
 
-  @override
-  Widget build(BuildContext context) {
-    print('test');
-    return AlertDialog(
-      title: Text('Choose a nickname'),
-      content: Form(
-        key: _formKey,
-        child: Container(
-          height: 200,
-          width: 300,
-          child: Center(
-            child: TextFormField(
-              maxLines: 1,
-              controller: nameController,
-              keyboardType: TextInputType.name,
-              validator: (name) {
-                if (name == null || name.isEmpty) {
-                  return 'Please enter a nickname';
-                } else if (clients.contains(name)) {
-                  return 'Nickname already exists';
-                } else {
-                  return null;
-                }
-              },
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          child: Text('Enter'),
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              Navigator.of(context).pop(nameController.text);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please try again')),
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-}

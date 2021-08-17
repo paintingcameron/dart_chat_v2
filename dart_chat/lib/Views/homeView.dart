@@ -1,8 +1,18 @@
+import 'package:dart_chat/Views/messageView.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:dart_chat/Bloc/bloc.dart';
+import 'package:flutter/material.dart';
+import 'package:dart_chat/exceptions/custExceptions.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
+  @override
+  _HomeViewState createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
   final TextEditingController nicknameController = new TextEditingController();
   GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  List clients = [];
 
   @override
   Widget build(BuildContext context) {
@@ -18,19 +28,30 @@ class HomeView extends StatelessWidget {
                 Container(
                   height: MediaQuery.of(context).size.height/2-200,
                   width: MediaQuery.of(context).size.width/2,
-                  child: ListView.builder(
-                    itemCount: clients.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        child: ListTile(
-                          title: Text('${clients[index]}'),
-                        ),
-                      );
+                  child: StreamBuilder(
+                    stream: bloc.clientStream,
+                    builder: (context, AsyncSnapshot<List> snapshot) {
+                      if (snapshot.hasData) {
+                        clients = snapshot.data!;
+                        return ListView.builder(
+                          itemCount: clients.length,
+                          itemBuilder: (context, index) {
+                            return Card(
+                              child: ListTile(
+                                title: Text('${clients[index]}'),
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return Text('No clients connected');
+                      }
                     },
                   ),
                 ),
                 SizedBox(height: 20,),
                 Form(
+                  key: _formKey,
                   child: Column(
                     children: [
                       TextFormField(
@@ -41,7 +62,6 @@ class HomeView extends StatelessWidget {
                         controller: nicknameController,
                         maxLines: 1,
                         validator: (name) {
-                          print('Name: $name');
                           if (name == null || name.isEmpty) {
                             return 'Please enter a nickname';
                           } else if (clients.contains(name)) {
@@ -56,9 +76,26 @@ class HomeView extends StatelessWidget {
                 ),
                 SizedBox(height: 10,),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      print('value nickname');
+                      try {
+                        await bloc.connectToServer(nicknameController.text);
+
+                        print('Welcome ${nicknameController.text}');
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MessageView(nicknameController.text),
+                            )
+                        );
+                      } on ServerConnectFailedException {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Server rejected request to connect. Try again later'))
+                        );
+                      }
+                    } else {
+                      print('${nicknameController.text} rejected');
                     }
                   },
                   child: Text('Enter DartChat'),
@@ -68,6 +105,5 @@ class HomeView extends StatelessWidget {
           )
       ),
     );
-  }
   }
 }
