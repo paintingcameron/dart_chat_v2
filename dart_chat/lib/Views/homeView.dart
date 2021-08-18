@@ -88,7 +88,7 @@ class _HomeViewState extends State<HomeView> {
                               builder: (context) => MessageView(nicknameController.text),
                             )
                         );
-                      } on ServerConnectFailedException {
+                      } on ServerRejectedRequestException {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Server rejected request to connect. Try again later'))

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dart_chat/exceptions/custExceptions.dart';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_common_client/socket_io_client_for_browser.dart' as IO;
 
 
 Future<List<dynamic>> getClients(String host, int requestPort) async {

@@ -7,3 +7,8 @@ class InvalidNicknameException implements Exception {
   String cause;
   InvalidNicknameException(this.cause);
 }
+
+class ServerRejectedRequestException implements Exception {
+  String cause;
+  ServerRejectedRequestException(this.cause);
+}

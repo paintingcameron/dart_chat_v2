@@ -4,11 +4,11 @@ import 'dart:typed_data';
 
 import 'package:dart_chat/API/api.dart' as api;
 import 'package:dart_chat/exceptions/custExceptions.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_common_client/socket_io_client_for_browser.dart' as IO;
 
 class Repo {
   late IO.Socket server;
-  late final String _nickname;
+  late final String nickname;
   String _host;
   int _requestPort, _chatPort;
   
@@ -21,37 +21,41 @@ class Repo {
 
     await api.validate(nickname, _host, _requestPort);
 
-    server = IO.io('http://localhost:3000');
-    server.onConnect((_) {
-      print('connect');
+    server = IO.ioBrowser('http://localhost:$_chatPort', {
+      'transports': ['polling', 'websocket'],
+      'nickname': nickname,
+    });
+
+    // server = IO.io('http://localhost:$_chatPort',
+    //   IO.OptionBuilder()
+    //     .setTransports(['websocket'])
+    //     .setExtraHeaders({'nickname': nickname})
+    //     .disableAutoConnect()
+    //     .build()
+    // );
+
+    server = server.connect();
+    print('Server connected: ${server.connected}');
+
+    server.on('connect', (_) {
+      print('Connected to server');
       server.emit('msg', 'this is a test');
     });
 
-    server.on('event', (data) => print(data));
-    server.onDisconnect((_) => print('disconnected'));
+    server.on('msg', (data) {
+      print(data);
+      globalChat.addToList(data);
+    });
 
-    // await Socket.connect(_host, _chatPort).then((Socket s) {
-    //   server = s;
-    //   s.listen(dataHandler, onError: errorHandler, onDone: doneHandler, cancelOnError: false);
-    // }).catchError((e) {
-    //   throw ServerConnectFailedException('Unable to connect to server');
-    // });
+    server.on('reject', (data) {
+      throw ServerRejectedRequestException(data);
+    });
 
-    _nickname = nickname;
+    server.on('disconnect', (_) => print('disconnected'));
+
+    this.nickname = nickname;
   }
-  //
-  // void doneHandler() {
-  //
-  // }
-  //
-  // void errorHandler(error, StackTrace trace) {
-  //   print(error);
-  // }
-  //
-  // void dataHandler(Uint8List data) {
-  //   globalChat.addToList(String.fromCharCodes(data));
-  // }
-  //
+
   void dispose() {
     server.destroy();
   }
