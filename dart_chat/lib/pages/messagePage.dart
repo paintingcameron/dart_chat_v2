@@ -2,20 +2,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dart_chat/Bloc/bloc.dart';
 
-class MessageView extends StatefulWidget {
+class MessagePage extends StatefulWidget {
   final String nickname;
 
-  MessageView(this.nickname);
+  MessagePage(this.nickname);
 
   @override
-  _MessageViewState createState() => _MessageViewState(nickname);
+  _MessagePageState createState() => _MessagePageState(nickname);
 }
 
-class _MessageViewState extends State<MessageView> {
+class _MessagePageState extends State<MessagePage> {
   String _nickname;
   final TextEditingController _messageController = TextEditingController();
 
-  _MessageViewState(this._nickname);
+  _MessagePageState(this._nickname);
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +28,14 @@ class _MessageViewState extends State<MessageView> {
           ),
           Expanded(
             flex: 2,
-            child: MessageInput(context),
+            child: MessageView(context),
           )
         ],
       ),
     );
   }
 
-  Widget MessageInput(BuildContext context) {
+  Widget MessageView(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.66,
       child: Scaffold(
@@ -45,37 +45,45 @@ class _MessageViewState extends State<MessageView> {
             Expanded(
               child: Container(),
             ),
-            Container(
-              height: 100,
-              child: Row(
-                children: [
-                  SizedBox(width: 5,),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Enter Message',
-                        border: OutlineInputBorder(),
-                      ),
-                      controller: _messageController,
-                      onSubmitted: (msg) {
-                        bloc.broadcast(_nickname, msg);
-                        _messageController.clear();
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.send, color: Colors.green,),
-                    iconSize: 40,
-                    onPressed: () {
-                      bloc.broadcast(_nickname, _messageController.text);
-                      _messageController.clear();
-                    },
-                  )
-                ],
-              ),
-            )
+            MessageInput(),
           ],
         ),
+      ),
+    );
+  }
+
+  // Widget MessageDisplay() {
+  //
+  // }
+
+  Widget MessageInput() {
+    return Container(
+      height: 100,
+      child: Row(
+        children: [
+          SizedBox(width: 5,),
+          Expanded(
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Enter Message',
+                border: OutlineInputBorder(),
+              ),
+              controller: _messageController,
+              onSubmitted: (msg) {
+                bloc.broadcast(_nickname, msg);
+                _messageController.clear();
+              },
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.send, color: Colors.green,),
+            iconSize: 40,
+            onPressed: () {
+              bloc.broadcast(_nickname, _messageController.text);
+              _messageController.clear();
+            },
+          )
+        ],
       ),
     );
   }

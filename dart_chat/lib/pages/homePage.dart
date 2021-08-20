@@ -1,4 +1,5 @@
-import 'package:dart_chat/Views/messageView.dart';
+import 'package:dart_chat/pages/messagePage.dart';
+import 'package:dart_chat/pages/messagePage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:dart_chat/Bloc/bloc.dart';
 import 'package:flutter/material.dart';
@@ -76,22 +77,22 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 SizedBox(height: 10,),
                 ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
+                    String nickname = nicknameController.text;
                     if (_formKey.currentState!.validate()) {
                       try {
-                        await bloc.connectToServer(nicknameController.text);
+                        bloc.joinChat(nicknameController.text);
 
-                        print('Welcome ${nicknameController.text}');
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MessageView(nicknameController.text),
-                            )
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => MessagePage(nicknameController.text))
+                        );
+                      } on InvalidNicknameException {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('The nickname: $nickname already exists'))
                         );
                       } on ServerRejectedRequestException {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Server rejected request to connect. Try again later'))
+                          SnackBar(content: Text('Server rejected the nickname: $nickname'))
                         );
                       }
                     } else {

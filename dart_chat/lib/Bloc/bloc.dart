@@ -2,43 +2,41 @@ import 'dart:io';
 
 import 'package:dart_chat/Repo/repository.dart';
 import 'package:dart_chat/API/api.dart' as api;
+import 'package:dart_chat/objects/user.dart';
 
 late Bloc bloc;
 
 class Bloc {
   final _host = '0.0.0.0';
-  final int _requestPort = 4568;
   final int _chatPort    = 4567;
-  late final Repo _repo;
+  late final Repo repo;
 
-  Stream<List> get clientStream => _repo.clientList.stream;
+  Stream<List> get clientStream => repo.userStream.stream;
   
   Bloc() {
-    _repo = Repo(_host, _requestPort, _chatPort);
+    repo = Repo(_host, _chatPort);
   }
+  
+  bool get connectedToServer => repo.connected;
 
-  Future<void> initClientStream() async {
-    _repo.clientList = StreamList(await api.getClients(_host, _requestPort));;
-  }
-
-  Future<void> connectToServer(String nickname) async {
-    await _repo.connectToServer(nickname);
+  void joinChat(String nickname) {
+    api.joinChat(nickname, repo.userStream.list as List<User>);
   }
   
   void whisper(String from, String to, String msg) {
-    api.whisper(from, to, msg, _repo.server);
+    api.whisper(from, to, msg, repo.server);
   }
   
   void broadcast(String from, String msg) {
-    api.broadcast(from, msg, _repo.server);
+    api.broadcast(from, msg, repo.server);
   }
 
 
   void sinkClients() {
-    _repo.clientList.sinkList();
+    repo.userStream.sinkList();
   }
 
   void closeConnection() {
-    _repo.dispose();
+    repo.dispose();
   }
 }
